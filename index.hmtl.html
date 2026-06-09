@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPOG · Expert Pro · Matrícula por CPF</title>
+<style>
+  :root{
+    --maroon:#8a1c1c;--maroon-d:#741414;--accent:#a82323;
+    --bg:#eef0f2;--card:#fff;--line:#e7e7ea;
+    --ink:#1c1c1f;--ink-2:#6c6c74;--ink-3:#9a9aa2;
+    --green-bg:#d6efdd;--green-tx:#1f7a3d;
+    --get:#0e7490;--post:#b45309;
+    --mono: ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans: system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);font-family:var(--sans);color:var(--ink);padding:28px 18px 60px;-webkit-font-smoothing:antialiased}
+  .frame{max-width:1140px;margin:0 auto;background:var(--card);border-radius:16px;border:1px solid var(--line);box-shadow:0 18px 50px rgba(40,10,10,.10);overflow:hidden}
+  .titlebar{background:linear-gradient(180deg,var(--maroon),var(--maroon-d));color:#fff;display:flex;align-items:center;gap:14px;padding:13px 22px;font-family:var(--mono);letter-spacing:.13em;font-size:13px}
+  .dots{display:flex;gap:7px}
+  .dots i{width:11px;height:11px;border-radius:50%;background:rgba(255,255,255,.45);display:block}
+  .titlebar .c{flex:1;text-align:center;text-transform:uppercase}
+  .titlebar .r{opacity:.92;font-size:12px}
+
+  .canvas{padding:30px 36px 42px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 13px}
+  .spacer{height:26px}
+  .hidden{display:none!important}
+
+  .search{display:flex;gap:14px}
+  .search input{flex:1;border:1.5px solid var(--line);border-radius:11px;padding:0 22px;height:60px;font-size:21px;font-family:var(--mono);letter-spacing:.04em;color:var(--ink);background:#fff}
+  .search input:focus{outline:none;border-color:var(--accent)}
+  .search input:read-only{background:#f7f7f8;color:var(--ink-2)}
+
+  .btn-wrap{position:relative;display:inline-flex}
+  .btn{border:0;background:var(--maroon);color:#fff;border-radius:11px;cursor:pointer;font-family:var(--mono);letter-spacing:.05em;font-size:15px;padding:0 30px;height:60px;display:inline-flex;align-items:center;gap:9px;transition:.16s}
+  .btn:hover{background:var(--maroon-d)}
+  .btn:disabled{background:#cfb3b3;cursor:not-allowed}
+  .btn.sm{height:52px;font-size:14px;padding:0 26px}
+  .btn:focus-visible{outline:3px solid #f2c9c9;outline-offset:2px}
+
+  .tip{
+    position:absolute;left:50%;bottom:calc(100% + 12px);transform:translateX(-50%) translateY(4px);
+    background:#1f2024;color:#f4f4f6;border-radius:10px;padding:11px 13px;width:248px;
+    font-family:var(--mono);font-size:12px;line-height:1.5;letter-spacing:.01em;
+    opacity:0;visibility:hidden;transition:.15s;z-index:20;box-shadow:0 10px 28px rgba(0,0,0,.28);text-align:left;
+  }
+  .tip::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:7px solid transparent;border-top-color:#1f2024}
+  .btn-wrap:hover .tip,.btn-wrap:focus-within .tip{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
+  .tip .v{display:inline-block;font-weight:700;font-size:10px;letter-spacing:.06em;padding:2px 7px;border-radius:5px;color:#fff;background:var(--get);margin-bottom:7px}
+  .tip .v.post{background:var(--post)}
+  .tip .ep{color:#fff;word-break:break-all}
+  .tip .st{display:flex;align-items:center;gap:7px;margin-top:8px;color:#bdbdc4;font-size:11px}
+  .tip .st .dot{width:8px;height:8px;border-radius:50%;background:#46c46a;box-shadow:0 0 0 3px rgba(70,196,106,.2)}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:22px 24px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+  .field .k{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:7px}
+  .field .v{font-size:17px;font-weight:600}
+  .pill{display:inline-block;background:var(--green-bg);color:var(--green-tx);font-family:var(--mono);font-size:11px;letter-spacing:.06em;font-weight:700;padding:4px 10px;border-radius:7px;text-transform:uppercase}
+
+  .mtable{width:100%;border-collapse:collapse;margin-top:18px}
+  .mtable th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);text-align:left;padding:0 12px 11px;border-bottom:1px solid var(--line)}
+  .mtable td{padding:14px 12px;border-bottom:1px solid #f1f1f3;font-size:15px}
+  .mtable tr:last-child td{border-bottom:0}
+  .mtable .crs{font-weight:600}
+  .mtable .turma{font-family:var(--mono);font-size:13px;color:var(--ink-2)}
+
+  .turma-card{display:flex;align-items:center;justify-content:space-between;gap:16px;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:18px 22px;cursor:pointer;transition:.14s;margin-bottom:12px}
+  .turma-card:hover{border-color:#d8b4b4;background:#fffafa}
+  .turma-card.sel{border-color:var(--accent);background:#fdf3f3}
+  .turma-card .nm{font-size:17px;font-weight:600;margin-bottom:4px}
+  .turma-card .meta{font-size:13px;color:var(--ink-2);font-family:var(--mono)}
+  .turma-card .pick{font-family:var(--mono);font-size:13px;letter-spacing:.05em;color:var(--accent);white-space:nowrap;font-weight:600}
+  .turma-card.sel .pick::before{content:"\2713  "}
+  .turma-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  .actions{display:flex;justify-content:flex-end;margin-top:18px}
+
+  .ok{text-align:center;padding:30px 20px 8px}
+  .check{width:72px;height:72px;border-radius:50%;background:var(--green-bg);color:var(--green-tx);display:grid;place-items:center;font-size:36px;margin:0 auto 18px}
+  .ok h2{margin:0 0 8px;font-size:25px}
+  .ok p{color:var(--ink-2);font-size:15px;max-width:520px;margin:0 auto;line-height:1.55}
+  .recap{display:inline-flex;flex-direction:column;gap:11px;text-align:left;margin:24px auto 4px;border:1px solid var(--line);border-radius:13px;padding:20px 28px;background:#fbfbfc}
+  .recap .row{display:flex;gap:16px;font-size:14px}
+  .recap .rk{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);width:160px}
+  .recap .rv{font-weight:600}
+  .btn-ghost{border:1px solid var(--line);background:#fff;color:var(--ink-2);border-radius:10px;padding:12px 22px;cursor:pointer;font-family:var(--mono);font-size:13px}
+  .btn-ghost:hover{border-color:var(--ink-3)}
+
+  /* loading modal */
+  .veil{position:fixed;inset:0;background:rgba(30,8,8,.45);display:none;place-items:center;padding:20px;z-index:50}
+  .veil.show{display:grid}
+  .loadmodal{background:#fff;border-radius:16px;max-width:540px;width:100%;padding:26px 30px 24px;box-shadow:0 24px 60px rgba(0,0,0,.32)}
+  .loadmodal h3{margin:0 0 5px;font-size:20px;display:flex;align-items:center;gap:11px}
+  .loadmodal .sub{margin:0 0 18px;color:var(--ink-2);font-size:13.5px;line-height:1.5}
+  .litem{display:flex;align-items:center;gap:14px;padding:14px 0;border-top:1px solid #f1f1f3}
+  .litem:first-of-type{border-top:0}
+  .litem .ltxt{flex:1;min-width:0}
+  .litem .lnm{font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .litem .lst{font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;margin-top:3px;color:var(--ink-3)}
+  .litem .lapi{font-family:var(--mono);font-size:10.5px;color:#b9b9c0;letter-spacing:.03em;white-space:nowrap}
+  .litem.run .lst{color:var(--post)}
+  .litem.done .lst{color:var(--green-tx)}
+  .ico{width:24px;height:24px;flex:none;display:grid;place-items:center}
+  .ico .dotp{width:9px;height:9px;border-radius:50%;background:#d4d4d9}
+  .ico .sp,.hspin{width:18px;height:18px;border:2.5px solid #ececec;border-top-color:var(--maroon);border-radius:50%;animation:sp .8s linear infinite}
+  .ico .ck{width:24px;height:24px;border-radius:50%;background:var(--green-bg);color:var(--green-tx);display:grid;place-items:center;font-size:14px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  @media(max-width:760px){
+    .grid3{grid-template-columns:1fr}
+    .canvas{padding:22px 18px 30px}
+    .search{flex-direction:column}.search input,.search .btn-wrap,.search .btn{width:100%}
+    .mtable th:nth-child(2),.mtable td:nth-child(2){display:none}
+  }
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="titlebar">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="c">IPOG · Expert Pro · Matrícula por CPF</span>
+    <span class="r">Consultor: Ana Lima</span>
+  </div>
+
+  <div class="canvas">
+
+    <section id="sec-cpf">
+      <p class="eyebrow">Consultar aluno por CPF</p>
+      <div class="search">
+        <input id="cpf" value="123.456.789-00" inputmode="numeric" aria-label="CPF do aluno">
+        <span class="btn-wrap">
+          <button class="btn" id="btnBuscar">Buscar</button>
+          <span class="tip" role="tooltip">
+            <span class="v">GET</span>
+            <span class="ep">/alunos/{cpf}</span>
+            <span class="st"><span class="dot"></span> Ativa · API já existe</span>
+          </span>
+        </span>
+      </div>
+    </section>
+
+    <section id="sec-aluno" class="hidden">
+      <div class="spacer"></div>
+      <p class="eyebrow">Aluno e matrículas</p>
+      <div class="card">
+        <div class="grid3">
+          <div class="field"><div class="k">Nome</div><div class="v">Maria Santos Oliveira</div></div>
+          <div class="field"><div class="k">E-mail</div><div class="v">maria.s@email.com</div></div>
+          <div class="field"><div class="k">Celular</div><div class="v">(62) 99999-0000</div></div>
+        </div>
+        <table class="mtable">
+          <thead><tr><th>Curso</th><th>Turma</th><th>Situação acadêmica</th><th>Situação financeira</th></tr></thead>
+          <tbody>
+            <tr><td class="crs">MBA Gestão de Projetos</td><td class="turma">MBAGP2026-01</td><td>Ativa</td><td><span class="pill">Paga</span></td></tr>
+            <tr><td class="crs">Excel Avançado para Negócios</td><td class="turma">EXT-XL-2025-03</td><td>Concluída</td><td><span class="pill">Paga</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="actions">
+        <span class="btn-wrap">
+          <button class="btn sm" id="btnTurmas">Consultar turmas Expert Pro</button>
+          <span class="tip" role="tooltip">
+            <span class="v">GET</span>
+            <span class="ep">/turmas?expertPro=true&amp;situacao=ABERTA</span>
+            <span class="st"><span class="dot"></span> Ativa · API já existe</span>
+          </span>
+        </span>
+      </div>
+    </section>
+
+    <section id="sec-turmas" class="hidden">
+      <div class="spacer"></div>
+      <p class="eyebrow">Turmas Expert Pro abertas · selecionar uma ou mais</p>
+      <div id="turmaList"></div>
+      <div class="actions">
+        <span class="btn-wrap">
+          <button class="btn sm" id="btnMatricular" disabled>Confirmar matrícula gratuita</button>
+          <span class="tip" role="tooltip">
+            <span class="v post">POST</span>
+            <span class="ep">/matricularpessoa</span>
+            <span class="st"><span class="dot"></span> Ativa · API já existe</span>
+          </span>
+        </span>
+      </div>
+    </section>
+
+    <section id="sec-ok" class="hidden">
+      <div class="ok">
+        <div class="check">✓</div>
+        <h2 id="okTitle">Matrícula confirmada</h2>
+        <p id="okMsg">—</p>
+        <div class="recap">
+          <div class="row"><span class="rk">Aluno</span><span class="rv">Maria Santos Oliveira</span></div>
+          <div class="row"><span class="rk">Matrículas</span><span class="rv" id="okTurmas">—</span></div>
+          <div class="row"><span class="rk">Situação</span><span class="rv"><span class="pill">Ativa</span></span></div>
+        </div>
+      </div>
+      <div class="actions" style="justify-content:center;margin-top:20px">
+        <button class="btn-ghost" id="btnReset">Nova consulta</button>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- MODAL DE CARREGAMENTO -->
+<div class="veil" id="veil">
+  <div class="loadmodal" role="dialog" aria-modal="true" aria-labelledby="ldTitle">
+    <h3 id="ldTitle"><span class="hspin" id="ldSpin"></span> <span id="ldTitleTx">Criando matrículas</span></h3>
+    <p class="sub">Cada matrícula é uma chamada individual à API <span style="font-family:var(--mono);font-size:12px">POST /matricularpessoa</span>. Isso pode levar alguns segundos.</p>
+    <div id="loadList"></div>
+  </div>
+</div>
+
+<script>
+const TURMAS=[
+  {nome:"Análise de Dados para Líderes",id:"EXT-DATA-2026-02",mod:"EAD",aula:"12/06/2026"},
+  {nome:"Inteligência Emocional Aplicada",id:"EXT-IE-2026-04",mod:"Híbrido",aula:"18/06/2026"},
+  {nome:"Storytelling Corporativo",id:"EXT-ST-2026-01",mod:"Presencial",aula:"25/06/2026"}
+];
+let selected=new Set();
+const show=id=>document.getElementById(id).classList.remove("hidden");
+const hide=id=>document.getElementById(id).classList.add("hidden");
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+
+function updateBtn(){
+  const b=document.getElementById("btnMatricular");
+  const n=selected.size;
+  b.disabled=n===0;
+  b.textContent = n<=1 ? "Confirmar matrícula gratuita" : `Confirmar ${n} matrículas gratuitas`;
+}
+
+const list=document.getElementById("turmaList");
+TURMAS.forEach((t,i)=>{
+  const d=document.createElement("div");
+  d.className="turma-card";d.tabIndex=0;
+  d.innerHTML=`<div><div class="nm">${t.nome}</div>
+    <div class="meta">Turma ${t.id} · ${t.mod} · Próxima aula ${t.aula}</div></div>
+    <div class="pick">Selecionar →</div>`;
+  const pick=()=>{
+    if(selected.has(i)){selected.delete(i);d.classList.remove("sel");d.querySelector(".pick").textContent="Selecionar →";}
+    else{selected.add(i);d.classList.add("sel");d.querySelector(".pick").textContent="Selecionada";}
+    updateBtn();
+  };
+  d.addEventListener("click",pick);
+  d.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();pick();}});
+  list.appendChild(d);
+});
+
+document.getElementById("btnBuscar").addEventListener("click",async()=>{
+  const b=document.getElementById("btnBuscar"),inp=document.getElementById("cpf");
+  b.disabled=true;const o=b.textContent;b.textContent="Buscando…";inp.readOnly=true;
+  await new Promise(r=>setTimeout(r,650));
+  b.textContent=o;show("sec-aluno");
+  document.getElementById("sec-aluno").scrollIntoView({behavior:"smooth",block:"nearest"});
+});
+
+document.getElementById("btnTurmas").addEventListener("click",async()=>{
+  const b=document.getElementById("btnTurmas");b.disabled=true;const o=b.textContent;b.textContent="Carregando…";
+  await new Promise(r=>setTimeout(r,550));
+  b.textContent=o;b.disabled=false;show("sec-turmas");
+  document.getElementById("sec-turmas").scrollIntoView({behavior:"smooth",block:"nearest"});
+});
+
+document.getElementById("btnMatricular").addEventListener("click",async()=>{
+  if(selected.size===0)return;
+  const chosen=[...selected];
+  const veil=document.getElementById("veil");
+  const ll=document.getElementById("loadList");
+  const spin=document.getElementById("ldSpin");
+  const titleTx=document.getElementById("ldTitleTx");
+  spin.style.display="";titleTx.textContent="Criando matrículas";
+  ll.innerHTML="";
+
+  chosen.forEach((idx,n)=>{
+    const t=TURMAS[idx];
+    const el=document.createElement("div");
+    el.className="litem";el.dataset.n=n;
+    el.innerHTML=`<span class="ico"><span class="dotp"></span></span>
+      <div class="ltxt"><div class="lnm">Matrícula ${n+1} · ${t.nome}</div>
+      <div class="lst">Na fila</div></div>
+      <span class="lapi">POST /matricularpessoa</span>`;
+    ll.appendChild(el);
+  });
+
+  veil.classList.add("show");
+
+  for(let n=0;n<chosen.length;n++){
+    const el=ll.querySelector(`[data-n="${n}"]`);
+    el.classList.add("run");
+    el.querySelector(".ico").innerHTML='<span class="sp"></span>';
+    el.querySelector(".lst").textContent=`Matrícula ${n+1} em andamento…`;
+    await wait(1050);
+    el.classList.remove("run");el.classList.add("done");
+    el.querySelector(".ico").innerHTML='<span class="ck">✓</span>';
+    el.querySelector(".lst").textContent=`Matrícula ${n+1} finalizada`;
+    await wait(350);
+  }
+
+  spin.style.display="none";
+  titleTx.textContent = chosen.length<=1 ? "Matrícula criada" : "Matrículas criadas";
+  await wait(650);
+  veil.classList.remove("show");
+
+  // confirmação
+  const n=chosen.length;
+  document.getElementById("okTitle").textContent = n<=1 ? "Matrícula confirmada" : "Matrículas confirmadas";
+  document.getElementById("okMsg").textContent = n<=1
+    ? "Maria Santos Oliveira foi matriculada na turma Expert Pro e passa a aparecer na lista da turma."
+    : `Maria Santos Oliveira foi matriculada nas ${n} turmas Expert Pro selecionadas e passa a aparecer nas respectivas listas.`;
+  document.getElementById("okTurmas").innerHTML = chosen.map(i=>`${TURMAS[i].nome} · ${TURMAS[i].id} · ${TURMAS[i].mod}`).join("<br>");
+
+  hide("sec-cpf");hide("sec-aluno");hide("sec-turmas");show("sec-ok");
+  document.querySelector(".canvas").scrollIntoView({behavior:"smooth",block:"start"});
+});
+
+document.getElementById("btnReset").addEventListener("click",()=>{
+  selected.clear();
+  document.getElementById("cpf").readOnly=false;
+  document.getElementById("btnBuscar").disabled=false;
+  const bm=document.getElementById("btnMatricular");bm.disabled=true;bm.textContent="Confirmar matrícula gratuita";
+  document.querySelectorAll(".turma-card").forEach(x=>{x.classList.remove("sel");x.querySelector(".pick").textContent="Selecionar →";});
+  hide("sec-aluno");hide("sec-turmas");hide("sec-ok");show("sec-cpf");
+  document.querySelector(".canvas").scrollIntoView({behavior:"smooth",block:"start"});
+});
+</script>
+</body>
+</html>
